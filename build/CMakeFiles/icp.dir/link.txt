@@ -1,0 +1,1 @@
+/usr/bin/c++    -fopenmp -O3 -DNDEBUG    CMakeFiles/icp.dir/src/demo.cpp.o  -o icp -rdynamic liblibicp.a 

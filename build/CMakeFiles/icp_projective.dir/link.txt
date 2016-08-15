@@ -1,0 +1,1 @@
+/usr/bin/c++    -fopenmp -O3 -DNDEBUG    CMakeFiles/icp_projective.dir/src/demo_projective.cpp.o  -o icp_projective -rdynamic liblibicp.a 
