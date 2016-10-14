@@ -32,7 +32,7 @@ endif(USE_OPENMP)
 # sources
 FILE(GLOB LIBICP_SRC_FILES "src/*.cpp")
 
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME} SHARED
   src/icp.cpp
   src/icpPointToPlane.cpp
   src/icpPointToPoint.cpp
