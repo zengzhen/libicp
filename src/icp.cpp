@@ -23,7 +23,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 using namespace std;
 
 Icp::Icp (double *M,const int32_t M_num,const int32_t dim) :
-  dim(dim), max_iter(200), min_delta(1e-2) {
+  dim(dim), max_iter(80), min_delta(1e-2) {
       
   // check for correct dimensionality
   if (dim!=2 && dim!=3) {
@@ -202,10 +202,10 @@ bool Icp::fitGaussNewton (double *T,const int32_t T_num,Eigen::VectorXf& x,const
     for (int32_t i=0; i<3; i++)
         t.val[i][0] = x(i);
     
-    cout << "initial guess:\n";
-    cout << "R:" << endl << R << endl << endl;
-    cout << "t:" << endl << ~t << endl << endl;
-    
+//     cout << "initial guess:\n";
+//     cout << "R:" << endl << R << endl << endl;
+//     cout << "t:" << endl << ~t << endl << endl;
+    indist_ = indist;
     // set active points
     vector<int32_t> active;
     if (indist<=0) {
@@ -213,6 +213,7 @@ bool Icp::fitGaussNewton (double *T,const int32_t T_num,Eigen::VectorXf& x,const
         for (int32_t i=0; i<T_num; i++)
             active.push_back(i);
     } else {
+        
         active = getInliers(T,T_num,R,t,indist);
         std::cout << "# inlieres = " << (int)active.size() << std::endl;
     }
@@ -250,8 +251,38 @@ bool Icp::fitIterateGaussNewton(double *T,const int32_t T_num,Eigen::VectorXf& x
     int32_t iter=0;
     for (iter=0; iter<max_iter; iter++)
     {
-        std::cout << "iter #" << iter << ": ";
-        double delta = fitStepGaussNewton(T,T_num,x,active);
+        Eigen::Matrix3f RR = Rx(x[3])*Ry(x[4])*Rz(x[5]);
+        Matrix R(3,3);
+        for (int32_t i=0; i<RR.rows(); i++)
+            for (int32_t j=0; j<RR.cols(); j++)
+                R.val[i][j] = RR(i,j);
+            Matrix t(3,1);
+        for (int32_t i=0; i<3; i++)
+            t.val[i][0] = x(i);
+        
+        vector<int32_t> ite_active;
+        if (indist_<=0) {
+            ite_active.clear();
+            for (int32_t i=0; i<T_num; i++)
+                ite_active.push_back(i);
+        } else {
+            ite_active = getInliers(T,T_num,R,t,indist_);
+            //         std::cout << "# inlieres = " << (int32_t)ite_active.size() << std::endl;
+            //         std::cout << "# T_num = " << T_num << std::endl;
+//             std::cout << "# inliers% = " << (float)ite_active.size()/T_num << std::endl;
+        }
+        
+
+//         if(((float)ite_active.size()/T_num < 0.3f))
+//         {
+//             printf("*****************************************\n");
+//             printf("not enough inliers.\n");
+//             return false;
+//         }
+        
+//         std::cout << "iter #" << iter << ": \n";
+        double delta = fitStepGaussNewton(T,T_num,x,ite_active);
+//         printf("delta: %f\n", delta);
         
         if (delta==-1)
         {
@@ -262,12 +293,12 @@ bool Icp::fitIterateGaussNewton(double *T,const int32_t T_num,Eigen::VectorXf& x
         {
             printf("*****************************************\n");
             printf("converged.\n");
-            std::cout << "x: " << x.transpose() << std::endl;
-            Eigen::Matrix3f RR = Rx(x[3])*Ry(x[4])*Rz(x[5]);
-            std::cout << "result Gauss Newton: \n R: \n" << RR << std::endl;
-            std::cout << "t: \n" << x.block<3,1>(0,0).transpose() << std::endl;
+//             std::cout << "x: " << x.transpose() << std::endl;
+//             std::cout << "result Gauss Newton: \n R: \n" << RR << std::endl;
+//             std::cout << "t: \n" << x.block<3,1>(0,0).transpose() << std::endl;
             break;
         }
+                
     }
     
     if(iter==max_iter)

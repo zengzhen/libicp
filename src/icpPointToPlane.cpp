@@ -139,10 +139,11 @@ double IcpPointToPlane::fitStepGaussNewton (double *T,const int32_t T_num, Eigen
                 double dy = M_tree->the_data[result[0].idx][1];
                 double dz = M_tree->the_data[result[0].idx][2];
                 
-//                 if(i<10)
+//                 if(sqrt((query[0]-dx)*(query[0]-dx)+(query[1]-dy)*(query[1]-dy)+(query[2]-dz)*(query[2]-dz)) > 10)
 //                 {
 //                     printf("input point: %f %f %f\n",  query[0], query[1], query[2]);
 //                     printf("model point: %f %f %f\n",  dx, dy, dz);
+//                     continue;
 //                 }
                 
                 // model point normal
@@ -215,19 +216,19 @@ double IcpPointToPlane::fitStepGaussNewton (double *T,const int32_t T_num, Eigen
         x = x + dx;
         
         Eigen::Matrix3f dR = Rx(dx(3))*Ry(dx(4))*Rz(dx(5));
-        Matrix R_(3,3);
+        Matrix varR_(3,3);
         for (int32_t k=0; k<dR.rows(); k++)
             for (int32_t j=0; j<dR.cols(); j++)
-                R_.val[k][j] = dR(k,j);
-        Matrix t_(3,1);
+                varR_.val[k][j] = dR(k,j);
+        Matrix vart_(3,1);
         for (int32_t k=0; k<3; k++)
-            t_.val[k][0] = dx[k];
+            vart_.val[k][0] = dx[k];
         
-//         std::cout << "dx = \n" << dx.transpose() << std::endl;
-//         std::cout << "x = \n" << x.transpose() << std::endl;
-        std::cout << "chi = " << chi << std::endl;
+//         std::cout << "dx = " << dx.transpose() << std::endl;
+//         std::cout << "x = " << x.transpose() << std::endl;
+//         std::cout << "chi = " << chi << std::endl;
         
-        double step = max((R_-Matrix::eye(3)).l2norm(),t_.l2norm());
+        double step = max((varR_-Matrix::eye(3)).l2norm(),vart_.l2norm());
         return step;
     }else{
         printf("only works with 3D points\n");
@@ -438,96 +439,96 @@ double IcpPointToPlane::fitStep (double *T,const int32_t T_num,Matrix &R,Matrix 
     t = R_*t+t_;
     
     // calculate the Jacobian of the alignment error
-    _error_jacobian.setIdentity();
-    r00 = R.val[0][0]; r01 = R.val[0][1]; r02 = R.val[0][2];
-    r10 = R.val[1][0]; r11 = R.val[1][1]; r12 = R.val[1][2];
-    r20 = R.val[2][0]; r21 = R.val[2][1]; r22 = R.val[2][2];
-    t0  = t.val[0][0]; t1  = t.val[1][0]; t2  = t.val[2][0];
-    
-    double alpha, beta, gamma;
-    alpha = std::atan2(r21, r22);
-    beta = std::asin(-r20);
-    gamma = std::acos(r00/std::cos(beta));
-    
-    double d_alpha = 0;
-    double d_beta = 0;
-    double d_gamma = 0;
-    double d_tx = 0;
-    double d_ty = 0;
-    double d_tz = 0;
-    
-    for (i=0; i<nact; i++) 
-    {
-        std::vector<float>         query(dim);
-        kdtree::KDTreeResultVector result;
-        
-        // get index of active point
-        int32_t idx = active[i];
-        
-        // transform point according to R|t
-        query[0] = (float)(r00*T[idx*3+0] + r01*T[idx*3+1] + r02*T[idx*3+2] + t0);
-        query[1] = (float)(r10*T[idx*3+0] + r11*T[idx*3+1] + r12*T[idx*3+2] + t1);
-        query[2] = (float)(r20*T[idx*3+0] + r21*T[idx*3+1] + r22*T[idx*3+2] + t2);
-        
-        // search nearest neighbor
-        M_tree->n_nearest(query,1,result);
-        //assert(result.size()!=0); // check if NN search failed
-        
-        // model point
-        double dx = M_tree->the_data[result[0].idx][0];
-        double dy = M_tree->the_data[result[0].idx][1];
-        double dz = M_tree->the_data[result[0].idx][2];
-        
-        // model point normal
-        double nx = M_normal[result[0].idx*3+0];
-        double ny = M_normal[result[0].idx*3+1];
-        double nz = M_normal[result[0].idx*3+2];
-        
-        // original point
-        double ox = T[idx*3+0];
-        double oy = T[idx*3+1];
-        double oz = T[idx*3+2];
-        
-        // template point
-        double sx = query[0];
-        double sy = query[1];
-        double sz = query[2];
-        
-        // point difference
-        double dpx = sx - dx;
-        double dpy = sy - dy;
-        double dpz = sz - dz;
-        
-        // derivative: dM(R,t)/d(alpha, beta, gamma, tx, ty, tz)
-        // file:///home/zengzhen/Downloads/Linear_Least-Squares_Optimization_for_Point-to-Pla.pdf
-        double temp=0;
-        temp += 2*dpx*((sin(beta)*sin(alpha)+cos(gamma)*sin(beta)*cos(alpha))*oy
-                      +(sin(gamma)*cos(alpha)-cos(gamma)*sin(beta)*sin(alpha))*oz)*nx*nx;
-        temp += 2*dpy*((-cos(beta)*sin(alpha)+sin(gamma)*sin(beta)*cos(alpha))*oy
-                      +(-cos(gamma)*cos(alpha)-sin(gamma)*sin(beta)*sin(alpha))*oz)*ny*ny;
-        temp += 2*dpz*(cos(beta)*cos(alpha)*oy-cos(beta)*sin(alpha)*oz)*nz*nz;
-        d_alpha += temp;
-        
-        temp = 0;
-        temp += 2*dpx*(-cos(gamma)*sin(beta)*ox + cos(gamma)*cos(beta)*sin(alpha)*oy
-                      +cos(gamma)*cos(beta)*cos(alpha)*oz)*nx*nx;
-        temp += 2*dpy*(-sin(gamma)*sin(beta)*ox + sin(gamma)*cos(beta)*sin(alpha)*oy
-                      +sin(gamma)*cos(beta)*cos(alpha)*oz)*ny*ny;
-        temp += 2*dpz*(-cos(beta)*ox - sin(beta)*sin(alpha)*oy
-                      -sin(beta)*cos(alpha)*oz)*nz*nz;
-        d_beta += temp;
-        
-        temp = 0;
-        temp += 2*dpx*(-sin(gamma)*cos(beta)*ox + (-cos(gamma)*cos(alpha)-sin(gamma)*sin(beta)*sin(alpha))*oy
-                      +(cos(gamma)*sin(alpha)-sin(gamma)*sin(beta)*cos(alpha))*oz)*nx*nx;
-        temp += 2*dpy*(-cos(gamma)*cos(beta)*ox + (-sin(gamma)*cos(alpha)+cos(gamma)*sin(beta)*sin(alpha))*oy
-                      +(sin(gamma)*sin(alpha)+cos(gamma)*sin(beta)*cos(alpha))*oz)*ny*ny;
-        d_gamma += temp;
-        
-        d_tx += 2*dpx*nx*nx;
-        d_ty += 2*dpy*ny*ny;
-        d_tz += 2*dpz*nz*nz;
-    }
+//     _error_jacobian.setIdentity();
+//     r00 = R.val[0][0]; r01 = R.val[0][1]; r02 = R.val[0][2];
+//     r10 = R.val[1][0]; r11 = R.val[1][1]; r12 = R.val[1][2];
+//     r20 = R.val[2][0]; r21 = R.val[2][1]; r22 = R.val[2][2];
+//     t0  = t.val[0][0]; t1  = t.val[1][0]; t2  = t.val[2][0];
+//     
+//     double alpha, beta, gamma;
+//     alpha = std::atan2(r21, r22);
+//     beta = std::asin(-r20);
+//     gamma = std::acos(r00/std::cos(beta));
+//     
+//     double d_alpha = 0;
+//     double d_beta = 0;
+//     double d_gamma = 0;
+//     double d_tx = 0;
+//     double d_ty = 0;
+//     double d_tz = 0;
+//     
+//     for (i=0; i<nact; i++) 
+//     {
+//         std::vector<float>         query(dim);
+//         kdtree::KDTreeResultVector result;
+//         
+//         // get index of active point
+//         int32_t idx = active[i];
+//         
+//         // transform point according to R|t
+//         query[0] = (float)(r00*T[idx*3+0] + r01*T[idx*3+1] + r02*T[idx*3+2] + t0);
+//         query[1] = (float)(r10*T[idx*3+0] + r11*T[idx*3+1] + r12*T[idx*3+2] + t1);
+//         query[2] = (float)(r20*T[idx*3+0] + r21*T[idx*3+1] + r22*T[idx*3+2] + t2);
+//         
+//         // search nearest neighbor
+//         M_tree->n_nearest(query,1,result);
+//         //assert(result.size()!=0); // check if NN search failed
+//         
+//         // model point
+//         double dx = M_tree->the_data[result[0].idx][0];
+//         double dy = M_tree->the_data[result[0].idx][1];
+//         double dz = M_tree->the_data[result[0].idx][2];
+//         
+//         // model point normal
+//         double nx = M_normal[result[0].idx*3+0];
+//         double ny = M_normal[result[0].idx*3+1];
+//         double nz = M_normal[result[0].idx*3+2];
+//         
+//         // original point
+//         double ox = T[idx*3+0];
+//         double oy = T[idx*3+1];
+//         double oz = T[idx*3+2];
+//         
+//         // template point
+//         double sx = query[0];
+//         double sy = query[1];
+//         double sz = query[2];
+//         
+//         // point difference
+//         double dpx = sx - dx;
+//         double dpy = sy - dy;
+//         double dpz = sz - dz;
+//         
+//         // derivative: dM(R,t)/d(alpha, beta, gamma, tx, ty, tz)
+//         // file:///home/zengzhen/Downloads/Linear_Least-Squares_Optimization_for_Point-to-Pla.pdf
+//         double temp=0;
+//         temp += 2*dpx*((sin(beta)*sin(alpha)+cos(gamma)*sin(beta)*cos(alpha))*oy
+//                       +(sin(gamma)*cos(alpha)-cos(gamma)*sin(beta)*sin(alpha))*oz)*nx*nx;
+//         temp += 2*dpy*((-cos(beta)*sin(alpha)+sin(gamma)*sin(beta)*cos(alpha))*oy
+//                       +(-cos(gamma)*cos(alpha)-sin(gamma)*sin(beta)*sin(alpha))*oz)*ny*ny;
+//         temp += 2*dpz*(cos(beta)*cos(alpha)*oy-cos(beta)*sin(alpha)*oz)*nz*nz;
+//         d_alpha += temp;
+//         
+//         temp = 0;
+//         temp += 2*dpx*(-cos(gamma)*sin(beta)*ox + cos(gamma)*cos(beta)*sin(alpha)*oy
+//                       +cos(gamma)*cos(beta)*cos(alpha)*oz)*nx*nx;
+//         temp += 2*dpy*(-sin(gamma)*sin(beta)*ox + sin(gamma)*cos(beta)*sin(alpha)*oy
+//                       +sin(gamma)*cos(beta)*cos(alpha)*oz)*ny*ny;
+//         temp += 2*dpz*(-cos(beta)*ox - sin(beta)*sin(alpha)*oy
+//                       -sin(beta)*cos(alpha)*oz)*nz*nz;
+//         d_beta += temp;
+//         
+//         temp = 0;
+//         temp += 2*dpx*(-sin(gamma)*cos(beta)*ox + (-cos(gamma)*cos(alpha)-sin(gamma)*sin(beta)*sin(alpha))*oy
+//                       +(cos(gamma)*sin(alpha)-sin(gamma)*sin(beta)*cos(alpha))*oz)*nx*nx;
+//         temp += 2*dpy*(-cos(gamma)*cos(beta)*ox + (-sin(gamma)*cos(alpha)+cos(gamma)*sin(beta)*sin(alpha))*oy
+//                       +(sin(gamma)*sin(alpha)+cos(gamma)*sin(beta)*cos(alpha))*oz)*ny*ny;
+//         d_gamma += temp;
+//         
+//         d_tx += 2*dpx*nx*nx;
+//         d_ty += 2*dpy*ny*ny;
+//         d_tz += 2*dpz*nz*nz;
+//     }
     
     
     
@@ -609,7 +610,8 @@ std::vector<int32_t> IcpPointToPlane::getInliers (double *T,const int32_t T_num,
       double nz = M_normal[neighbor[0].idx*3+2];
 
       // check if it is an inlier
-      if ((sx-dx)*nx+(sy-dy)*ny+(sz-dz)*nz<indist)
+//       if ((sx-dx)*nx+(sy-dy)*ny+(sz-dz)*nz<indist)
+      if(sqrt((sx-dx)*(sx-dx)+(sy-dy)*(sy-dy)+(sz-dz)*(sz-dz)) < indist)
         inliers.push_back(i);
     }
   }

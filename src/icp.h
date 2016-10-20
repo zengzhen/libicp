@@ -100,6 +100,8 @@ protected:
   int32_t dim;       // dimensionality of model + template data (2 or 3)
   int32_t max_iter;  // max number of iterations
   double  min_delta; // min parameter delta
+  
+  double indist_;
 };
 
 #endif // ICP_H
