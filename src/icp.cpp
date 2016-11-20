@@ -23,7 +23,7 @@ Street, Fifth Floor, Boston, MA 02110-1301, USA
 using namespace std;
 
 Icp::Icp (double *M,const int32_t M_num,const int32_t dim) :
-  dim(dim), max_iter(80), min_delta(1e-2) {
+  dim(dim), max_iter(200), min_delta(1e-2) {
       
   // check for correct dimensionality
   if (dim!=2 && dim!=3) {
@@ -232,8 +232,39 @@ bool Icp::fitIterate(double *T,const int32_t T_num,Matrix &R,Matrix &t,const std
   // iterate until convergence
   int32_t iter=0;
   for (iter=0; iter<max_iter; iter++)
-    if (fitStep(T,T_num,R,t,active)<min_delta)
-      break;
+  {
+      printf("ite: %d\n", iter);
+      vector<int32_t> ite_active;
+      if (indist_<=0) {
+          ite_active.clear();
+          for (int32_t i=0; i<T_num; i++)
+              ite_active.push_back(i);
+      } else {
+          ite_active = getInliers(T,T_num,R,t,indist_);
+          //         std::cout << "# inlieres = " << (int32_t)ite_active.size() << std::endl;
+          //         std::cout << "# T_num = " << T_num << std::endl;
+          std::cout << "# inliers% = " << (float)ite_active.size()/T_num << std::endl;
+      }
+      
+      
+      double delta = fitStep(T,T_num,R,t,ite_active);
+      printf("delta: %f\n", delta);
+      
+      if (delta==-1)
+      {
+          printf("cannot solve !b_.solve(A_)\n");
+          exit(1);
+      }
+      if (delta<min_delta)
+      {
+          printf("*****************************************\n");
+          printf("converged.\n");
+          //             std::cout << "x: " << x.transpose() << std::endl;
+          //             std::cout << "result Gauss Newton: \n R: \n" << RR << std::endl;
+          //             std::cout << "t: \n" << x.block<3,1>(0,0).transpose() << std::endl;
+          break;
+      }
+  }
     
   if(iter==max_iter)
       return false;

@@ -401,7 +401,7 @@ double IcpPointToPlane::fitStep (double *T,const int32_t T_num,Matrix &R,Matrix 
     Matrix A_ = ~A*A;
     Matrix b_ = ~A*b;
 
-    if (!b_.solve(A_)) return 0; // failure
+    if (!b_.solve(A_)) return -1; // failure
 #else
     // use SVD which is slower but more stable numerically
     Matrix b_=lssolvesvd(A, b);
@@ -610,8 +610,9 @@ std::vector<int32_t> IcpPointToPlane::getInliers (double *T,const int32_t T_num,
       double nz = M_normal[neighbor[0].idx*3+2];
 
       // check if it is an inlier
+//       if(sqrt((sx-dx)*(sx-dx)+(sy-dy)*(sy-dy)+(sz-dz)*(sz-dz)) < indist)
 //       if ((sx-dx)*nx+(sy-dy)*ny+(sz-dz)*nz<indist)
-      if(sqrt((sx-dx)*(sx-dx)+(sy-dy)*(sy-dy)+(sz-dz)*(sz-dz)) < indist)
+      if (fabs((sx-dx)*nx)+fabs((sy-dy)*ny)+fabs((sz-dz)*nz)<indist)
         inliers.push_back(i);
     }
   }

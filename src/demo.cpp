@@ -38,9 +38,9 @@ int main (int argc, char** argv) {
   double* T = (double*)calloc(3*num,sizeof(double));
 
   // set model and template points
-  Eigen::Vector3f eulers(-0.6, -0.3, 1);
+  Eigen::Vector3f eulers(-0.5, -0.2, 0.4);
   Eigen::Matrix3f RR = IcpPointToPlane::Rx(eulers[0])*IcpPointToPlane::Ry(eulers[1])*IcpPointToPlane::Rz(eulers[2]);
-  Eigen::Vector3f translation(0.1, 0.5, 0.1);
+  Eigen::Vector3f translation(0.5, 0.5, 0.5);
   
   cout << endl << "Creating model with 10000 points ..." << endl;
   cout << "Creating template by specified transformtaion" << endl;
@@ -71,16 +71,17 @@ int main (int argc, char** argv) {
   // run point-to-plane ICP (-1 = no outlier threshold)
   cout << endl << "Running ICP (point-to-plane, no outliers)" << endl;  
   IcpPointToPlane icp(T,num,dim);
-  icp.fit(M,num,R,t,-1); //M*R+t = T
-  // results
-  cout << endl << "libicp result:" << endl;
-  cout << "R:" << endl << R << endl << endl;
-  cout << "t:" << endl << t << endl << endl;
+//   icp.fit(M,num,R,t,-1); //M*R+t = T
+//   // results
+//   cout << endl << "libicp result:" << endl;
+//   cout << "R:" << endl << R << endl << endl;
+//   cout << "t:" << endl << t << endl << endl;
   
   // use gauss newton based method
   Eigen::VectorXf x0(6,1); // (t_x, t_y, t_z, alpha_x, alpha_y, alpha_z)
   x0 << 0, 0, 0, 0, 0, 0;
   icp.fitGaussNewton(M, num, x0, -1);
+  cout << "fitGaussNewton: x0 = " << x0.transpose() << std::endl;
   
   printf("*****************************************\n");
   cout << "groundtruth \n";
