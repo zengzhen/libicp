@@ -156,7 +156,7 @@ bool Icp::fit (double *T,const int32_t T_num,Matrix &R,Matrix &t,const double in
     cout << "ERROR: Icp works only with at least 5 template points" << endl;
     return false;
   }
-  
+  indist_ = indist;
   // set active points
   vector<int32_t> active;
   if (indist<=0) {

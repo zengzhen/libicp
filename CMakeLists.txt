@@ -2,6 +2,9 @@
 cmake_minimum_required (VERSION 2.6)
 project (libicp)
 
+SET(CMAKE_MODULE_PATH "/usr/share/cmake-2.8/Modules/")
+message(STATUS "module path: ${CMAKE_MODULE_PATH} !!!")
+
 ## Eigen3
 find_package(Eigen3 REQUIRED)
 if(EIGEN3_INCLUDE_DIR)

@@ -80,7 +80,7 @@ int main (int argc, char** argv) {
   // use gauss newton based method
   Eigen::VectorXf x0(6,1); // (t_x, t_y, t_z, alpha_x, alpha_y, alpha_z)
   x0 << 0, 0, 0, 0, 0, 0;
-  icp.fitGaussNewton(M, num, x0, -1);
+  icp.fitGaussNewton(M, num, x0, 0.1);
   cout << "fitGaussNewton: x0 = " << x0.transpose() << std::endl;
   
   printf("*****************************************\n");

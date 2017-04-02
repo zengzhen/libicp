@@ -1,3 +1,0 @@
-/home/zengzhen/Documents/libraries/libicp/build/CMakeFiles/icp.dir
-/home/zengzhen/Documents/libraries/libicp/build/CMakeFiles/icp_projective.dir
-/home/zengzhen/Documents/libraries/libicp/build/CMakeFiles/libicp.dir

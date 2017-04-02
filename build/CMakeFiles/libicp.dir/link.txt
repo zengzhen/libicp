@@ -1,2 +1,0 @@
-/usr/bin/ar cr liblibicp.a  CMakeFiles/libicp.dir/src/icp.cpp.o CMakeFiles/libicp.dir/src/icpPointToPlane.cpp.o CMakeFiles/libicp.dir/src/icpPointToPoint.cpp.o CMakeFiles/libicp.dir/src/kdtree.cpp.o CMakeFiles/libicp.dir/src/matrix.cpp.o
-/usr/bin/ranlib liblibicp.a

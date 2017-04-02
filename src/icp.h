@@ -89,7 +89,7 @@ private:
   
   // inherited classes need to overwrite these functions
   virtual double               fitStep(double *T,const int32_t T_num,Matrix &R,Matrix &t,const std::vector<int32_t> &active) = 0;
-  virtual double               fitStepGaussNewton(double *T,const int32_t T_num,Eigen::VectorXf& x,const std::vector<int32_t> &active) = 0;
+  virtual double               fitStepGaussNewton(double *T,const int32_t T_num,Eigen::VectorXf& x,const std::vector<int32_t> &active) {};
   virtual std::vector<int32_t> getInliers(double *T,const int32_t T_num,const Matrix &R,const Matrix &t,const double indist) = 0;
   
 protected:
