@@ -143,6 +143,43 @@ Eigen::Matrix3f Icp::Rz_prime(double angle)
     return R;
 }
 
+Eigen::Matrix4f Icp::RTToMatrix(Matrix R, Matrix t)
+{
+    Eigen::Matrix4f transform;
+    transform.setIdentity();
+    
+    Eigen::Matrix3f m;
+    for (int32_t i=0; i<m.rows(); i++)
+        for (int32_t j=0; j<m.cols(); j++)
+            m(i,j) = R.val[i][j];
+    transform.block<3,3>(0,0) = m;
+    
+    Eigen::Vector3f trans;
+    for (int32_t i=0; i<3; i++)
+        trans(i) = t.val[i][0];
+    transform.block<3,1>(0,3) = trans;
+    
+    return transform;
+}
+
+Eigen::Matrix4f Icp::vectorToMatrix(Eigen::VectorXf x)
+{
+    Eigen::Matrix4f transform;
+    transform.setIdentity();
+    
+    Eigen::Matrix3f m;
+    m = Eigen::AngleAxisf(x[3], Eigen::Vector3f::UnitX())
+    * Eigen::AngleAxisf(x[4], Eigen::Vector3f::UnitY())
+    * Eigen::AngleAxisf(x[5], Eigen::Vector3f::UnitZ());
+    transform.block<3,3>(0,0) = m;
+    
+    Eigen::Vector3f trans(x[0],x[1],x[2]);
+    transform.block<3,1>(0,3) = trans;
+    
+    return transform;
+}
+
+
 bool Icp::fit (double *T,const int32_t T_num,Matrix &R,Matrix &t,const double indist) {
   
   // make sure we have a model tree

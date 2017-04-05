@@ -68,6 +68,8 @@ public:
   static Eigen::Matrix3f Rx_prime(double angle);
   static Eigen::Matrix3f Ry_prime(double angle);
   static Eigen::Matrix3f Rz_prime(double angle);
+  static Eigen::Matrix4f RTToMatrix(Matrix R, Matrix t);
+  static Eigen::Matrix4f vectorToMatrix(Eigen::VectorXf x);
   
   void setCamParms(double fx, double fy, double ox, double oy);
   void setImageSize(int w, int h);
