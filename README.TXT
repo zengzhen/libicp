@@ -1,3 +1,6 @@
+* add Gauss Newton method for Point-to-Plane icp
+
+From [libicp](http://www.cvlibs.net/software/libicp/)
 ####################################################################################
 # Copyright 2011. All rights reserved.                                             #
 # Institute of Measurement and Control Systems                                     #
