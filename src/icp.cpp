@@ -337,7 +337,7 @@ bool Icp::fitIterateGaussNewton(double *T,const int32_t T_num,Eigen::VectorXf& x
             ite_active = getInliers(T,T_num,R,t,indist_);
             //         std::cout << "# inlieres = " << (int32_t)ite_active.size() << std::endl;
             //         std::cout << "# T_num = " << T_num << std::endl;
-//             std::cout << "# inliers% = " << (float)ite_active.size()/T_num << std::endl;
+            std::cout << "# inliers% = " << (float)ite_active.size()/T_num << std::endl;
         }
         
 
